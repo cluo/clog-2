@@ -6,17 +6,27 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
-	fmt.Println("hi!")
-	err := processFile("/home/raylu/irclogs/learnprogramming/2013-07-18.gz")
+	utc, err := time.LoadLocation("Etc/UTC")
 	if err != nil {
 		panic(err)
 	}
+	t, err := time.ParseInLocation("2006-01-02", "2013-07-18", utc)
+	if err != nil {
+		panic(err)
+	}
+
+	err = processFile("/home/raylu/irclogs/learnprogramming/2013-07-18.gz", t.Unix())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("done!")
 }
 
-func processFile(filepath string) error {
+func processFile(filepath string, date int64) error {
 	rawReader, err := os.Open(filepath)
 	if err != nil {
 		return err
@@ -27,16 +37,19 @@ func processFile(filepath string) error {
 		return err
 	}
 	defer gzipReader.Close()
+
 	scanner := bufio.NewScanner(gzipReader)
+	lineNumber := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		processLine(line)
+		lineNumber++
+		processLine(date, lineNumber, line)
 	}
 	err = scanner.Err()
 	return err
 }
 
-func processLine(line string) {
+func processLine(date int64, lineNumber int, line string) {
 	if strings.HasPrefix(line, "--- Log ") { // --- Log opened/closed
 		return
 	}
@@ -72,9 +85,10 @@ func processLine(line string) {
 		if word == "" {
 			continue
 		}
-		processWord(word)
+		processWord(date, lineNumber, word)
 	}
 }
 
-func processWord(word string) {
+func processWord(date int64, lineNumber int, word string) {
+	writeWord("learnprogramming", date, lineNumber, word)
 }
