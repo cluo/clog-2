@@ -5,12 +5,12 @@ import (
 	"compress/gzip"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
-)
+	"time"
 
-type ircMsg struct {
-	Text string
-}
+	"github.com/blevesearch/bleve"
+)
 
 func main() {
 	switch os.Args[1] {
@@ -25,14 +25,34 @@ func main() {
 }
 
 func process() {
-	err := processFile("/home/raylu/irclogs/learnprogramming/2013-07-18.gz", "learnprogramming", "2013-07-18")
+	matches, err := filepath.Glob("/home/raylu/irclogs/learnprogramming/????-??-??.gz")
 	if err != nil {
 		panic(err)
+	}
+	index := getIndex("learnprogramming")
+	for _, path := range matches {
+		fmt.Println(path)
+		date := filepath.Base(path)
+		date = date[:len(date)-3] // trim ".gz"
+		batch := index.NewBatch()
+		err := processFile(batch, path, date)
+		if err != nil {
+			panic(err)
+		}
+		err = index.Batch(batch)
+		if err != nil {
+			panic(err)
+		}
 	}
 	fmt.Println("done!")
 }
 
-func processFile(filepath, channel, date string) error {
+func processFile(batch *bleve.Batch, filepath, date string) error {
+	t, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return err
+	}
+
 	rawReader, err := os.Open(filepath)
 	if err != nil {
 		return err
@@ -49,14 +69,14 @@ func processFile(filepath, channel, date string) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNumber++
-		processLine(channel, date, lineNumber, line)
+		processLine(batch, date, t, lineNumber, line)
 	}
 	err = scanner.Err()
 	return err
 }
 
-func processLine(channel, date string, lineNumber int, line string) {
-	if strings.HasPrefix(line, "--- Log ") { // --- Log opened/closed
+func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, line string) {
+	if strings.HasPrefix(line, "--- ") { // --- Log opened/closed, Day changed
 		return
 	}
 	// line should be one of
@@ -86,7 +106,7 @@ func processLine(channel, date string, lineNumber int, line string) {
 		panic("unexpected line: " + line)
 	}
 
-	msg := ircMsg{Text: text}
-	index := getIndex(channel)
-	index.Index(fmt.Sprintf("%s:%d", date, lineNumber), msg)
+	id := fmt.Sprintf("%s:%d", date, lineNumber)
+	msg := ircMsg{Dt: dt, Text: text}
+	batch.Index(id, msg)
 }

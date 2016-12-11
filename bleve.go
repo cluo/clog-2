@@ -2,18 +2,25 @@ package main
 
 import (
 	"path"
+	"time"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/mapping"
 )
 
+type ircMsg struct {
+	Dt time.Time
+	Text string
+}
+
 var (
 	indices      map[string]bleve.Index
-	indexMapping *mapping.IndexMapping
+	indexMapping *mapping.IndexMappingImpl
 )
 
 func init() {
 	indices = make(map[string]bleve.Index)
+	indexMapping = bleve.NewIndexMapping()
 }
 
 func getIndex(channel string) bleve.Index {
@@ -23,9 +30,8 @@ func getIndex(channel string) bleve.Index {
 		blevePath := path.Join("bleve", channel)
 		index, err = bleve.Open(blevePath)
 		if err != nil {
-			if err.Error() == "cannot open index, path does not exist" {
-				mapping := bleve.NewIndexMapping()
-				index, err = bleve.New(blevePath, mapping)
+			if err == bleve.ErrorIndexPathDoesNotExist {
+				index, err = bleve.New(blevePath, indexMapping)
 				if err != nil {
 					panic(err)
 				}
@@ -39,7 +45,7 @@ func getIndex(channel string) bleve.Index {
 }
 
 func search(channel, query string) *bleve.SearchResult {
-	searchReq := bleve.NewSearchRequest(bleve.NewMatchQuery(query))
+	searchReq := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
 	index := getIndex(channel)
 	results, err := index.Search(searchReq)
 	if err != nil {
