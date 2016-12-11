@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/mapping"
 )
 
 type ircMsg struct {
-	Dt time.Time
-	Text string
+	Dt   time.Time `json:"dt"`
+	Text string    `json:"text"`
 }
 
 var (
@@ -21,6 +22,10 @@ var (
 func init() {
 	indices = make(map[string]bleve.Index)
 	indexMapping = bleve.NewIndexMapping()
+	indexMapping.DefaultMapping.AddFieldMappingsAt("dt", bleve.NewDateTimeFieldMapping())
+	tfm := bleve.NewTextFieldMapping()
+	tfm.Analyzer = en.AnalyzerName
+	indexMapping.DefaultMapping.AddFieldMappingsAt("text", tfm)
 }
 
 func getIndex(channel string) bleve.Index {
