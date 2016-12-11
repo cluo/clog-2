@@ -2,29 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
 )
 
 var html []byte
 
 func serve(addr string) {
-	fileInfo, err := os.Stat("index.html")
+	var err error
+	html, err = ioutil.ReadFile("index.html")
 	if err != nil {
 		panic(err)
-	}
-	reader, err := os.Open("index.html")
-	if err != nil {
-		panic(err)
-	}
-	defer reader.Close()
-	html = make([]byte, fileInfo.Size())
-	n, err := reader.Read(html)
-	if err != nil {
-		panic(err)
-	} else if n != int(fileInfo.Size()) {
-		panic(fmt.Sprintf("expected %d bytes, got %d", fileInfo.Size(), n))
 	}
 
 	http.Handle("/", http.HandlerFunc(webIndex))

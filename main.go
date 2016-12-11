@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/blevesearch/bleve"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -24,16 +26,51 @@ func main() {
 	}
 }
 
+func getState() map[string]string {
+	state := make(map[string]string)
+	contents, err := ioutil.ReadFile("bleve/state.yaml")
+	if err != nil {
+		perr, ok := err.(*os.PathError)
+		if !ok || perr.Err.Error() != "no such file or directory" {
+			panic(err)
+		}
+		mkdir("bleve")
+		contents, err = yaml.Marshal(state)
+		if err != nil {
+			panic(err)
+		}
+		ioutil.WriteFile("bleve/state.yaml", contents, 0644)
+	} else {
+		yaml.Unmarshal(contents, &state)
+	}
+	return state
+}
+
+func updateState(state map[string]string) {
+	contents, err := yaml.Marshal(state)
+	if err != nil {
+		panic(err)
+	}
+	ioutil.WriteFile("bleve/state.yaml", contents, 0644)
+}
+
 func process() {
+	state := getState()
+	fmt.Println("state:", state["learnprogramming"])
+
 	matches, err := filepath.Glob("/home/raylu/irclogs/learnprogramming/????-??-??.gz")
 	if err != nil {
 		panic(err)
 	}
 	index := getIndex("learnprogramming")
 	for _, path := range matches {
-		fmt.Println(path)
 		date := filepath.Base(path)
 		date = date[:len(date)-3] // trim ".gz"
+		if date <= state["learnprogramming"] {
+			continue
+		}
+		fmt.Println(path)
+
 		batch := index.NewBatch()
 		err := processFile(batch, path, date)
 		if err != nil {
@@ -43,6 +80,8 @@ func process() {
 		if err != nil {
 			panic(err)
 		}
+		state["learnprogramming"] = date
+		updateState(state)
 	}
 	fmt.Println("done!")
 }
@@ -109,4 +148,14 @@ func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, 
 	id := fmt.Sprintf("%s:%d", date, lineNumber)
 	msg := ircMsg{Dt: dt, Text: text}
 	batch.Index(id, msg)
+}
+
+func mkdir(dir string) {
+	err := os.Mkdir(dir, 0755)
+	if err != nil {
+		perr, ok := err.(*os.PathError)
+		if !ok || perr.Err.Error() != "file exists" {
+			panic(err)
+		}
+	}
 }
