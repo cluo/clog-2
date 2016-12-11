@@ -6,27 +6,31 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
-func main() {
-	utc, err := time.LoadLocation("Etc/UTC")
-	if err != nil {
-		panic(err)
-	}
-	t, err := time.ParseInLocation("2006-01-02", "2013-07-18", utc)
-	if err != nil {
-		panic(err)
-	}
+type ircMsg struct {
+	Text string
+}
 
-	err = processFile("/home/raylu/irclogs/learnprogramming/2013-07-18.gz", t.Unix())
+func main() {
+	switch os.Args[1] {
+	case "process":
+		process()
+	case "search":
+		results := search("learnprogramming", os.Args[2])
+		fmt.Println(results)
+	}
+}
+
+func process() {
+	err := processFile("/home/raylu/irclogs/learnprogramming/2013-07-18.gz", "learnprogramming", "2013-07-18")
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("done!")
 }
 
-func processFile(filepath string, date int64) error {
+func processFile(filepath, channel, date string) error {
 	rawReader, err := os.Open(filepath)
 	if err != nil {
 		return err
@@ -43,13 +47,13 @@ func processFile(filepath string, date int64) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		lineNumber++
-		processLine(date, lineNumber, line)
+		processLine(channel, date, lineNumber, line)
 	}
 	err = scanner.Err()
 	return err
 }
 
-func processLine(date int64, lineNumber int, line string) {
+func processLine(channel, date string, lineNumber int, line string) {
 	if strings.HasPrefix(line, "--- Log ") { // --- Log opened/closed
 		return
 	}
@@ -63,32 +67,24 @@ func processLine(date int64, lineNumber int, line string) {
 	if line[6:9] == "-!-" {
 		return
 	}
-	var msg string
+	var text string
 	if line[6] == '<' {
 		nickEnd := strings.IndexByte(line[7:], '>')
 		if nickEnd == -1 {
 			panic("unexpected line: " + line)
 		}
-		msg = line[nickEnd+9:]
+		text = line[nickEnd+9:]
 	} else if line[6:9] == " * " {
 		nickEnd := strings.IndexByte(line[10:], ' ')
 		if nickEnd == -1 {
 			panic("unexpected line: " + line)
 		}
-		msg = line[nickEnd+11:]
+		text = line[nickEnd+11:]
 	} else {
 		panic("unexpected line: " + line)
 	}
 
-	msg = strings.ToLower(msg)
-	for _, word := range strings.Split(msg, " ") {
-		if word == "" {
-			continue
-		}
-		processWord(date, lineNumber, word)
-	}
-}
-
-func processWord(date int64, lineNumber int, word string) {
-	writeWord("learnprogramming", date, lineNumber, word)
+	msg := ircMsg{Text: text}
+	index := getIndex(channel)
+	index.Index(fmt.Sprintf("%s:%d", date, lineNumber), msg)
 }
