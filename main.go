@@ -122,10 +122,12 @@ func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, 
 	// "12:34 <nick> msg"
 	// "12:34  * nick action"
 	// "12:34 -!- nick ..."
+	// "12:34 -nick:#channel- notice"
+	// "12:34 nick [mask] requested CTCP ..."
 	if line[2] != ':' {
 		panic("unexpected line: " + line)
 	}
-	if line[6:9] == "-!-" {
+	if line[6] == '-' {
 		return
 	}
 	var text string
@@ -141,7 +143,7 @@ func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, 
 			panic("unexpected line: " + line)
 		}
 		text = line[nickEnd+11:]
-	} else {
+	} else if strings.Index(line, "requested CTCP") == -1 {
 		panic("unexpected line: " + line)
 	}
 
