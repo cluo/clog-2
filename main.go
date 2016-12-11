@@ -19,6 +19,8 @@ func main() {
 	case "search":
 		results := search("learnprogramming", os.Args[2])
 		fmt.Println(results)
+	case "serve":
+		serve(":8000")
 	}
 }
 
