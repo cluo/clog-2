@@ -4,8 +4,54 @@
 	<title>clog</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="theme-color" content="#222">
+	<style>
+		body {
+			background-color: #000;
+			color: #eee;
+		}
+		a {
+			color: #08a;
+		}
+	</style>
 </head>
 <body>
-	hi!
+	<form method="get">
+		<input type="text" name="channel" value="learnprogramming">
+		<input type="text" name="q" value='+flask +dt:<"2013-08-01"'>
+		<input type="submit">
+	</form>
+	<div id="hits"></div>
+	<script>
+		(() => {
+			'use strict';
+			if (window.location.search.length <= 1)
+				return;
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = () => {
+				if (xhr.readyState !== XMLHttpRequest.DONE)
+					return;
+				var data = JSON.parse(xhr.responseText);
+				renderResults(data);
+			};
+			xhr.open('GET', '/search' + window.location.search);
+			xhr.send();
+
+			var renderResults = (data) => {
+				var hits = data['hits'];
+				var el = document.querySelector('#hits');
+				for (var i = 0; i < hits.length; i++) {
+					var hit = hits[i];
+					var link = document.createElement('a');
+					var channel = hit['index'].substr(6); // strip "bleve/"
+					var split = hit['id'].split(':');
+					link.href = '/log/' + channel + '/' + split[0];
+					link.innerText = hit['id'];
+					var div = document.createElement('div');
+					div.appendChild(link)
+					el.appendChild(div);
+				}
+			};
+		})();
+	</script>
 </body>
 </html>

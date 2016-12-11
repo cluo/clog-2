@@ -1,9 +1,13 @@
 package main
 
 import (
+	"compress/gzip"
 	"encoding/json"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 var html []byte
@@ -16,6 +20,7 @@ func serve(addr string) {
 	}
 
 	http.Handle("/", http.HandlerFunc(webIndex))
+	http.Handle("/log/", http.HandlerFunc(webLog))
 	http.Handle("/search", http.HandlerFunc(webSearch))
 	err = http.ListenAndServe(addr, nil)
 	if err != nil {
@@ -26,6 +31,32 @@ func serve(addr string) {
 func webIndex(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write(html)
+}
+
+func webLog(w http.ResponseWriter, req *http.Request) {
+	filepath := req.URL.Path[5:]
+	filepath = fmt.Sprintf("/home/raylu/irclogs/%s.gz", filepath)
+	rawReader, err := os.Open(filepath)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer rawReader.Close()
+	gzipReader, err := gzip.NewReader(rawReader)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	defer gzipReader.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, err = io.Copy(w, gzipReader)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func webSearch(w http.ResponseWriter, req *http.Request) {
@@ -39,6 +70,7 @@ func webSearch(w http.ResponseWriter, req *http.Request) {
 	output, err := json.MarshalIndent(results, "", "\t")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(output)
