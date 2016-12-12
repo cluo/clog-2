@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 )
 
 var html []byte
@@ -34,26 +35,36 @@ func webIndex(w http.ResponseWriter, req *http.Request) {
 }
 
 func webLog(w http.ResponseWriter, req *http.Request) {
-	filepath := req.URL.Path[5:]
-	filepath = fmt.Sprintf("/home/raylu/irclogs/%s.gz", filepath)
+	const logRoot = "/home/raylu/irclogs"
+	relpath := req.URL.Path[5:] // strip "/log/"
+	relpath = path.Clean(relpath)
+	filepath := fmt.Sprintf("%s/%s.gz", logRoot, relpath)
+
+	var reader io.ReadCloser
 	rawReader, err := os.Open(filepath)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		perr, ok := err.(*os.PathError)
+		if !ok || perr.Err.Error() != "no such file or directory" {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		// try again without .gz
+		reader, err = os.Open(fmt.Sprintf("%s/%s", logRoot, relpath))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("couldn't find \"%s\"", req.URL.Path[5:]), 404)
+			return
+		}
+	} else {
+		defer rawReader.Close()
+		reader, err = gzip.NewReader(rawReader)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	}
-	defer rawReader.Close()
-	gzipReader, err := gzip.NewReader(rawReader)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	defer gzipReader.Close()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
+	defer reader.Close()
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	_, err = io.Copy(w, gzipReader)
+	_, err = io.Copy(w, reader)
 	if err != nil {
 		fmt.Println(err)
 	}
