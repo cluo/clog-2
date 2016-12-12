@@ -87,7 +87,7 @@ func process() {
 }
 
 func processFile(batch *bleve.Batch, filepath, date string) error {
-	t, err := time.Parse("2006-01-02", date)
+	dt, err := time.Parse("2006-01-02", date)
 	if err != nil {
 		return err
 	}
@@ -104,19 +104,36 @@ func processFile(batch *bleve.Batch, filepath, date string) error {
 	defer gzipReader.Close()
 
 	scanner := bufio.NewScanner(gzipReader)
-	lineNumber := 0
+	lastWindow := -1
+	windowText := ""
 	for scanner.Scan() {
 		line := scanner.Text()
-		lineNumber++
-		processLine(batch, date, t, lineNumber, line)
+		sixHourWindow, text := parseLine(line)
+		if sixHourWindow == -1 {
+			continue
+		} else if sixHourWindow == lastWindow {
+			windowText += "\n" + text
+		} else {
+			id := fmt.Sprintf("%s:%d", date, sixHourWindow)
+			msg := ircMsg{Dt: dt, Text: windowText}
+			batch.Index(id, msg)
+
+			windowText = text
+			lastWindow = sixHourWindow
+		}
 	}
 	err = scanner.Err()
+	if lastWindow != -1 {
+		id := fmt.Sprintf("%s:%d", date, lastWindow)
+		msg := ircMsg{Dt: dt, Text: windowText}
+		batch.Index(id, msg)
+	}
 	return err
 }
 
-func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, line string) {
+func parseLine(line string) (int, string) {
 	if strings.HasPrefix(line, "--- ") { // --- Log opened/closed, Day changed
-		return
+		return -1, ""
 	}
 	// line should be one of
 	// "12:34 <nick> msg"
@@ -128,7 +145,7 @@ func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, 
 		panic("unexpected line: " + line)
 	}
 	if line[6] == '-' {
-		return
+		return -1, ""
 	}
 	var text string
 	if line[6] == '<' {
@@ -147,9 +164,9 @@ func processLine(batch *bleve.Batch, date string, dt time.Time, lineNumber int, 
 		panic("unexpected line: " + line)
 	}
 
-	id := fmt.Sprintf("%s:%d", date, lineNumber)
-	msg := ircMsg{Dt: dt, Text: text}
-	batch.Index(id, msg)
+	var hour int
+	fmt.Sscanf(line[:2], "%d", &hour)
+	return hour / 6, text
 }
 
 func mkdir(dir string) {
