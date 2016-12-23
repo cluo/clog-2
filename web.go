@@ -1,14 +1,11 @@
 package main
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
 )
 
@@ -61,32 +58,17 @@ func webLog(w http.ResponseWriter, req *http.Request) {
 
 	relpath := req.URL.Path[5:] // strip "/log/"
 	relpath = path.Clean(relpath)
-	filepath := fmt.Sprintf("%s/%s.gz", config.Irclogs, relpath)
-
-	var reader io.ReadCloser
-	rawReader, err := os.Open(filepath)
+	log, err := openLog(relpath)
 	if err != nil {
-		perr, ok := err.(*os.PathError)
-		if !ok || perr.Err.Error() != "no such file or directory" {
+		if lerr, ok := err.(*logNotFound); ok {
+			http.Error(w, lerr.Error(), 404)
+		} else {
 			http.Error(w, err.Error(), 500)
-			return
 		}
-		// try again without .gz
-		reader, err = os.Open(fmt.Sprintf("%s/%s", config.Irclogs, relpath))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("couldn't find \"%s\"", req.URL.Path[5:]), 404)
-			return
-		}
-	} else {
-		defer rawReader.Close()
-		reader, err = gzip.NewReader(rawReader)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
+		return
 	}
-	defer reader.Close()
-	logBytes, err := ioutil.ReadAll(reader)
+	defer log.Close()
+	logBytes, err := ioutil.ReadAll(log.reader)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
