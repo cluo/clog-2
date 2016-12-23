@@ -36,3 +36,7 @@ div#content {
 div#hits {
 	margin-top: 25px;
 }
+
+div.line.highlight {
+	background-color: #531;
+}
