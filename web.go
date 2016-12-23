@@ -9,43 +9,22 @@ import (
 	"path"
 )
 
-var html []byte
-
 func serve(addr string) {
-	var err error
-	if !config.RereadHtml {
-		html, err = ioutil.ReadFile("index.html")
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	http.Handle("/", http.HandlerFunc(webIndex))
-	http.Handle("/style.css", http.HandlerFunc(webCss))
 	http.Handle("/log/", http.HandlerFunc(webLog))
 	http.Handle("/search", http.HandlerFunc(webSearch))
-	err = http.ListenAndServe(addr, nil)
+	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		panic(err)
 	}
 }
 
 func webIndex(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if config.RereadHtml {
-		http.ServeFile(w, req, "index.html")
-	} else {
-		w.Write(html)
-	}
-}
-
-func webCss(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/css; charset=utf-8")
-	http.ServeFile(w, req, "style.css")
+	http.ServeFile(w, req, "web"+req.URL.Path)
 }
 
 func webLog(w http.ResponseWriter, req *http.Request) {
-	src, err := ioutil.ReadFile("log.html")
+	src, err := ioutil.ReadFile("web/log.html")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
