@@ -9,7 +9,12 @@
 <body>
 	<div id="content">
 		{{range $i, $line := .LogIter}}
-			<div class="line" id="l{{$i}}">{{$line}}</div>
+			<div class="line" id="l{{$i}}">
+				{{if $line.Timestamp}}
+					<a href="#l{{$i}}">{{$line.Timestamp}}</a>
+				{{end}}
+				{{$line.Text}}
+			</div>
 		{{end}}
 	</div>
 	<script src="/log.js"></script>

@@ -40,3 +40,6 @@ div#hits {
 div.line.highlight {
 	background-color: #531;
 }
+div.line.highlight > a {
+	background-color: #630;
+}

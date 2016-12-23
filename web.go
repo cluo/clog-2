@@ -50,7 +50,7 @@ func webLog(w http.ResponseWriter, req *http.Request) {
 
 	context := struct {
 		Relpath string
-		LogIter chan string
+		LogIter chan logline
 	}{
 		Relpath: relpath,
 		LogIter: log.Iter(),

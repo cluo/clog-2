@@ -14,6 +14,11 @@ type logfile struct {
 	scanner   *bufio.Scanner
 }
 
+type logline struct {
+	Timestamp string
+	Text      string
+}
+
 func openLog(relpath string) (*logfile, error) {
 	filepath := fmt.Sprintf("%s/%s.gz", config.Irclogs, relpath)
 	var reader io.ReadCloser
@@ -47,11 +52,16 @@ func (lf *logfile) Close() {
 	}
 }
 
-func (lf *logfile) Iter() chan string {
-	ch := make(chan string)
+func (lf *logfile) Iter() chan logline {
+	ch := make(chan logline)
 	go func() {
 		for lf.scanner.Scan() {
-			ch <- lf.scanner.Text()
+			line := lf.scanner.Text()
+			if len(line) > 7 && line[2] == ':' {
+				ch <- logline{line[:5], line[6:]}
+			} else {
+				ch <- logline{"", line}
+			}
 		}
 		err := lf.scanner.Err()
 		if err != nil {
