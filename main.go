@@ -15,11 +15,13 @@ import (
 )
 
 func main() {
+	config = getConfig()
+
 	switch os.Args[1] {
 	case "process":
 		process()
 	case "search":
-		results := search("learnprogramming", os.Args[2])
+		results := search(os.Args[2], os.Args[3])
 		fmt.Println(results)
 	case "serve":
 		serve(":8000")
@@ -56,17 +58,25 @@ func updateState(state map[string]string) {
 
 func process() {
 	state := getState()
-	fmt.Println("state:", state["learnprogramming"])
+	fmt.Println("state:", state)
 
-	matches, err := filepath.Glob("/home/raylu/irclogs/learnprogramming/????-??-??.gz")
+	for _, channel := range config.Channels {
+		processChannel(state, channel)
+	}
+	fmt.Println("done!")
+}
+
+func processChannel(state map[string]string, channel string) {
+	fmt.Println("processing", channel)
+	matches, err := filepath.Glob(filepath.Join(config.Irclogs, channel, "????-??-??.gz"))
 	if err != nil {
 		panic(err)
 	}
-	index := getIndex("learnprogramming")
+	index := getIndex(channel)
 	for _, path := range matches {
 		date := filepath.Base(path)
 		date = date[:len(date)-3] // trim ".gz"
-		if date <= state["learnprogramming"] {
+		if date <= state[channel] {
 			continue
 		}
 		fmt.Println(path)
@@ -80,10 +90,9 @@ func process() {
 		if err != nil {
 			panic(err)
 		}
-		state["learnprogramming"] = date
+		state[channel] = date
 		updateState(state)
 	}
-	fmt.Println("done!")
 }
 
 func processFile(batch *bleve.Batch, filepath, date string) error {
