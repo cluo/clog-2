@@ -8,7 +8,9 @@
 </head>
 <body>
 	<div id="content">
-		<pre>{{.Log}}</pre>
+		{{range $i, $line := .LogIter}}
+			<div class="line" id="l{{$i}}">{{$line}}</div>
+		{{end}}
 	</div>
 </body>
 </html>

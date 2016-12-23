@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 type logfile struct {
 	reader    io.ReadCloser
 	rawReader io.ReadCloser
+	scanner   *bufio.Scanner
 }
 
 func openLog(relpath string) (*logfile, error) {
@@ -33,7 +35,9 @@ func openLog(relpath string) (*logfile, error) {
 			return nil, err
 		}
 	}
-	return &logfile{reader: reader, rawReader: rawReader}, nil
+	scanner := bufio.NewScanner(reader)
+	lf := &logfile{reader: reader, rawReader: rawReader, scanner: scanner}
+	return lf, nil
 }
 
 func (lf *logfile) Close() {
@@ -41,6 +45,21 @@ func (lf *logfile) Close() {
 	if lf.rawReader != nil {
 		lf.rawReader.Close()
 	}
+}
+
+func (lf *logfile) Iter() chan string {
+	ch := make(chan string)
+	go func() {
+		for lf.scanner.Scan() {
+			ch <- lf.scanner.Text()
+		}
+		err := lf.scanner.Err()
+		if err != nil {
+			fmt.Println("logfile Iter:", err)
+		}
+		close(ch)
+	}()
+	return ch
 }
 
 type logNotFound struct {

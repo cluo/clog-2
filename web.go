@@ -68,18 +68,13 @@ func webLog(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer log.Close()
-	logBytes, err := ioutil.ReadAll(log.reader)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
 
 	context := struct {
 		Relpath string
-		Log     string
+		LogIter chan string
 	}{
 		Relpath: relpath,
-		Log:     string(logBytes),
+		LogIter: log.Iter(),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	err = tpl.Execute(w, context)
