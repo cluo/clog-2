@@ -1,0 +1,38 @@
+body {
+	background-color: #000;
+	color: #eee;
+	font-family: monospace;
+}
+
+a {
+	color: #08a;
+	text-decoration: none;
+}
+a:hover {
+	color: #0ad;
+	text-decoration: underline;
+}
+
+input {
+	background-color: #222;
+	margin: 3px;
+	padding: 2px 3px;
+	border: 1px solid #ddd;
+	color: inherit;
+	font-family: inherit;
+}
+
+input.query {
+	width: 500px;
+}
+
+div#content {
+	width: 900px;
+	margin: 50px auto;
+	padding: 25px;
+	background-color: #111;
+}
+
+div#hits {
+	margin-top: 25px;
+}
