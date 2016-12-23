@@ -7,8 +7,9 @@ import (
 )
 
 type configuration struct {
-	Irclogs  string
-	Channels []string
+	Irclogs    string
+	Channels   []string
+	RereadHtml bool
 }
 
 var config configuration

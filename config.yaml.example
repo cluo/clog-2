@@ -2,3 +2,4 @@
 irclogs: /home/raylu/irclogs
 channels:
     - learnprogramming
+rereadhtml: true
