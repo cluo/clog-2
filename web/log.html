@@ -8,12 +8,12 @@
 </head>
 <body>
 	<div id="content">
-		{{range $i, $line := .LogIter}}
-			<div class="line" id="l{{$i}}">
-				{{if $line.Timestamp}}
-					<a href="#l{{$i}}">{{$line.Timestamp}}</a>
+		{{range .LogIter}}
+			<div class="line" id="l{{.Number}}">
+				{{if .Timestamp}}
+					<a href="#l{{.Number}}">{{.Timestamp}}</a>
 				{{end}}
-				{{$line.Text}}
+				{{.Text}}
 			</div>
 		{{end}}
 	</div>

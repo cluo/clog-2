@@ -16,6 +16,7 @@ type logfile struct {
 }
 
 type logline struct {
+	Number    int
 	Timestamp string
 	Text      string
 }
@@ -68,12 +69,14 @@ func (lf *logfile) Close() {
 func (lf *logfile) Iter() chan logline {
 	ch := make(chan logline)
 	go func() {
+		lineNo := 0
 		for lf.scanner.Scan() {
+			lineNo++
 			line := lf.scanner.Text()
 			if len(line) > 7 && line[2] == ':' {
-				ch <- logline{line[:5], line[6:]}
+				ch <- logline{lineNo, line[:5], line[6:]}
 			} else {
-				ch <- logline{"", line}
+				ch <- logline{lineNo, "", line}
 			}
 		}
 		err := lf.scanner.Err()
