@@ -28,18 +28,20 @@
 			var hit = hits[i];
 
 			var link = document.createElement('a');
-			var channel = hit['index'].substr(6); // strip "bleve/"
-			var split = hit['id'].split(':');
-			link.href = '/log/' + channel + '/' + split[0];
-			link.innerText = hit['id'];
+			var href = '/log/' + query['channel'] + '/' + hit['date']
+			if (hit['line'] != -1)
+				href += '#l' + hit['line'];
+			link.href = href;
+			link.innerText = hit['date'] + ':' + hit['line'];
 
-			var fragment = document.createElement('pre');
-			fragment.innerHTML = hit['fragments']['text'][0];
 
 			var div = document.createElement('div');
 			div.classList.add('hit');
 			div.appendChild(link);
-			div.appendChild(fragment);
+			if (hit['line'] != -1) {
+				div.appendChild(document.createElement('br'));
+				div.appendChild(document.createTextNode(hit['text']));
+			}
 			el.appendChild(div);
 		}
 	};
