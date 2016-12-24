@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,16 +65,16 @@ func updateState(state map[string]string) {
 
 func process() {
 	state := getState()
-	fmt.Println("state:", state)
+	log.Println("state:", state)
 
 	for _, channel := range config.Channels {
 		processChannel(state, channel)
 	}
-	fmt.Println("done!")
+	log.Println("done!")
 }
 
 func processChannel(state map[string]string, channel string) {
-	fmt.Println("processing", channel)
+	log.Println("processing", channel)
 	matches, err := filepath.Glob(filepath.Join(config.Irclogs, channel, "????-??-??.gz"))
 	if err != nil {
 		panic(err)
@@ -85,7 +86,7 @@ func processChannel(state map[string]string, channel string) {
 		if date <= state[channel] {
 			continue
 		}
-		fmt.Println(path)
+		log.Println(path)
 
 		batch := index.NewBatch()
 		err := processFile(batch, path, date)

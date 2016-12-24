@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path"
 )
@@ -34,7 +34,7 @@ func webIndex(w http.ResponseWriter, req *http.Request) {
 		}
 		err = tpl.Execute(w, context)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 	} else {
 		http.ServeFile(w, req, "web"+req.URL.Path)
@@ -50,7 +50,7 @@ func webLog(w http.ResponseWriter, req *http.Request) {
 
 	relpath := req.URL.Path[5:] // strip "/log/"
 	relpath = path.Clean(relpath)
-	log, err := openLog(relpath)
+	lf, err := openLog(relpath)
 	if err != nil {
 		if lerr, ok := err.(*logNotFound); ok {
 			http.Error(w, lerr.Error(), 404)
@@ -59,19 +59,19 @@ func webLog(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	defer log.Close()
+	defer lf.Close()
 
 	context := struct {
 		Relpath string
 		LogIter chan logline
 	}{
 		Relpath: relpath,
-		LogIter: log.Iter(),
+		LogIter: lf.Iter(),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	err = tpl.Execute(w, context)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 }
 

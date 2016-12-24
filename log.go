@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 )
@@ -81,7 +82,7 @@ func (lf *logfile) Iter() chan logline {
 		}
 		err := lf.scanner.Err()
 		if err != nil {
-			fmt.Println("logfile Iter:", err)
+			log.Println("logfile Iter:", err)
 		}
 		close(ch)
 	}()
@@ -103,7 +104,7 @@ func (lf *logfile) Line(sixHourWindow int, fragment string) (int, string) {
 	}
 	err := lf.scanner.Err()
 	if err != nil {
-		fmt.Println("logfile Line:", err)
+		log.Println("logfile Line:", err)
 	}
 	return -1, ""
 }
