@@ -120,10 +120,11 @@ func processFile(batch *bleve.Batch, filepath, date string) error {
 		sixHourWindow, text := parseLine(line)
 		if sixHourWindow == -1 {
 			continue
-		} else if sixHourWindow == lastWindow {
+		} else if sixHourWindow == lastWindow || lastWindow == -1 {
 			windowText += "\n" + text
+			lastWindow = sixHourWindow
 		} else {
-			id := fmt.Sprintf("%s:%d", date, sixHourWindow)
+			id := fmt.Sprintf("%s:%d", date, lastWindow)
 			msg := ircMsg{Dt: dt, Text: windowText}
 			batch.Index(id, msg)
 
