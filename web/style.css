@@ -33,9 +33,16 @@ div#content {
 	background-color: #111;
 }
 
+/* index */
+
 div#hits {
 	margin-top: 25px;
 }
+div#hits > div.hit {
+	margin: 1em 0;
+}
+
+/* log */
 
 div.line.highlight {
 	background-color: #531;

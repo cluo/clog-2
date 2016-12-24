@@ -22,18 +22,24 @@
 	xhr.open('GET', '/search' + window.location.search);
 	xhr.send();
 
-	var renderResults = (data) => {
-		var hits = data['hits'];
+	var renderResults = (hits) => {
 		var el = document.querySelector('#hits');
 		for (var i = 0; i < hits.length; i++) {
 			var hit = hits[i];
+
 			var link = document.createElement('a');
 			var channel = hit['index'].substr(6); // strip "bleve/"
 			var split = hit['id'].split(':');
 			link.href = '/log/' + channel + '/' + split[0];
 			link.innerText = hit['id'];
+
+			var fragment = document.createElement('pre');
+			fragment.innerHTML = hit['fragments']['text'][0];
+
 			var div = document.createElement('div');
-			div.appendChild(link)
+			div.classList.add('hit');
+			div.appendChild(link);
+			div.appendChild(fragment);
 			el.appendChild(div);
 		}
 	};

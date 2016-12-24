@@ -70,7 +70,7 @@ func webSearch(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	results := search(channel, q)
-	output, err := json.MarshalIndent(results, "", "\t")
+	output, err := json.MarshalIndent(results.Hits, "", "\t")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
