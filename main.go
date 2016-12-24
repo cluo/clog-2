@@ -21,8 +21,14 @@ func main() {
 	case "process":
 		process()
 	case "search":
-		results := search(os.Args[2], os.Args[3])
-		fmt.Println(results)
+		results, err := search(os.Args[2], os.Args[3])
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			for _, hit := range results {
+				fmt.Println(hit)
+			}
+		}
 	case "serve":
 		serve(":8000")
 	}

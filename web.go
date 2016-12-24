@@ -69,8 +69,13 @@ func webSearch(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "missing channel or q", 400)
 		return
 	}
-	results := search(channel, q)
-	output, err := json.MarshalIndent(results.Hits, "", "\t")
+
+	results, err := search(channel, q)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	output, err := json.MarshalIndent(results, "", "\t")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

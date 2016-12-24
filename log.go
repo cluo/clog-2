@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type logfile struct {
@@ -17,6 +18,18 @@ type logfile struct {
 type logline struct {
 	Timestamp string
 	Text      string
+}
+
+var windows map[int]map[string]bool
+
+func init() {
+	windows = make(map[int]map[string]bool)
+	for i := 0; i < 4; i++ {
+		windows[i] = make(map[string]bool, 24/6)
+		for j := i * 6; j < (i+1)*6; j++ {
+			windows[i][fmt.Sprintf("%02d", j)] = true
+		}
+	}
 }
 
 func openLog(relpath string) (*logfile, error) {
@@ -70,6 +83,26 @@ func (lf *logfile) Iter() chan logline {
 		close(ch)
 	}()
 	return ch
+}
+
+func (lf *logfile) Line(sixHourWindow int, fragment string) (int, string) {
+	hours := windows[sixHourWindow]
+	lineNo := 0
+	for lf.scanner.Scan() {
+		lineNo++
+		line := lf.scanner.Text()
+		if len(line) <= 7 || line[2] != ':' {
+			continue
+		}
+		if hours[line[:2]] && strings.Index(line, fragment) > -1 {
+			return lineNo, line
+		}
+	}
+	err := lf.scanner.Err()
+	if err != nil {
+		fmt.Println("logfile Line:", err)
+	}
+	return -1, ""
 }
 
 type logNotFound struct {
