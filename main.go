@@ -31,6 +31,11 @@ func main() {
 			}
 		}
 	case "serve":
+		go func() {
+			for range time.NewTicker(1 * time.Hour).C {
+				process()
+			}
+		}()
 		serve(":8000")
 	}
 }
