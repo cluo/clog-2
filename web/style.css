@@ -31,6 +31,7 @@ div#content {
 	margin: 50px auto;
 	padding: 25px;
 	background-color: #111;
+	overflow-wrap: break-word;
 }
 
 /* index */

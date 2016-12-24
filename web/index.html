@@ -10,7 +10,11 @@
 	<div id="content">
 		<form method="get">
 			<label>channel:
-				<input type="text" name="channel" value="learnprogramming">
+				<select name="channel">
+				{{range .Channels}}
+					<option value="{{.}}">{{.}}</option>
+				{{end}}
+				</select>
 			</label>
 			<br>
 			<label>query:

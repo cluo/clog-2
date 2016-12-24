@@ -9,7 +9,7 @@
 		var pair = split[i].split('=');
 		query[pair[0]] = decodeURIComponent(pair[1].replace(/\+/g, ' '));
 	}
-	document.querySelector('input[name=channel]').value = query['channel'];
+	document.querySelector('select[name=channel]').value = query['channel'];
 	document.querySelector('input[name=q]').value = query['q'];
 
 	var xhr = new XMLHttpRequest();

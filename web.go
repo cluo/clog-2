@@ -20,16 +20,29 @@ func serve(addr string) {
 }
 
 func webIndex(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, "web"+req.URL.Path)
+	if req.URL.Path == "/" {
+		tpl, err := loadTemplate("index")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		context := struct {
+			Channels []string
+		}{
+			Channels: config.Channels,
+		}
+		err = tpl.Execute(w, context)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		http.ServeFile(w, req, "web"+req.URL.Path)
+	}
 }
 
 func webLog(w http.ResponseWriter, req *http.Request) {
-	src, err := ioutil.ReadFile("web/log.html")
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-	tpl, err := template.New("log").Parse(string(src))
+	tpl, err := loadTemplate("log")
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -82,4 +95,12 @@ func webSearch(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(output)
+}
+
+func loadTemplate(name string) (*template.Template, error) {
+	src, err := ioutil.ReadFile("web/" + name + ".html")
+	if err != nil {
+		return nil, err
+	}
+	return template.New(name).Parse(string(src))
 }
