@@ -43,6 +43,10 @@ div#hits > div.hit {
 	margin: 1em 0;
 }
 
+div.github {
+	float: right;
+}
+
 /* log */
 
 div.line.highlight {
