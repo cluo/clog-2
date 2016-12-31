@@ -182,7 +182,7 @@ func parseLine(line string) (int, string) {
 			panic("unexpected line: " + line)
 		}
 		text = line[nickEnd+11:]
-	} else if strings.Index(line, "requested CTCP") == -1 {
+	} else if strings.Index(line, "requested CTCP") == -1 && strings.Index(line, "requested unknown CTCP") == -1 {
 		panic("unexpected line: " + line)
 	}
 
