@@ -44,5 +44,7 @@
 			}
 			el.appendChild(div);
 		}
+		if (hits.length === 0)
+			el.appendChild(document.createTextNode('no results'));
 	};
 })();
