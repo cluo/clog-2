@@ -1,22 +1,25 @@
 (() => {
 	'use strict';
-	if (document.location.hash <= 1)
-		return;
 
-	var el = document.querySelector(document.location.hash);
-	if (el) {
-		el.classList.add('highlight');
-		setTimeout(() => {
-			scrollTo(0, el.offsetTop - window.innerHeight / 2);
-		}, 0);
+	if (document.location.hash) {
+		var el = document.querySelector(document.location.hash);
+		if (el) {
+			el.classList.add('highlight');
+			setTimeout(() => {
+				scrollTo(0, el.offsetTop - window.innerHeight / 2);
+			}, 0);
+		}
 	}
 
 	var hashChanged = () => {
 		var el = document.querySelector('div.highlight');
-		el.classList.remove('highlight');
-		el = document.querySelector(document.location.hash);
 		if (el)
-			el.classList.add('highlight');
+			el.classList.remove('highlight');
+		if (document.location.hash) {
+			el = document.querySelector(document.location.hash);
+			if (el)
+				el.classList.add('highlight');
+		}
 	};
 	addEventListener('hashchange', hashChanged);
 
